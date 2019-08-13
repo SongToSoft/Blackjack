@@ -16,7 +16,7 @@ class Game
         puts "------New Shuffle------"
         if (@player.GetMoney == 0)
             puts "You lose all money!"
-            return
+            abort "End game"
         end
         @player.SetScore(0)
         @player.SetCardsNumber(0)
