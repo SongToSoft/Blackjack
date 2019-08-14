@@ -5,39 +5,26 @@ class Game
         @cardsDeck = CardsDeck.new
         @player = Player.new
         @dealer  = Player.new
-        @currentBid = 0
+        @split = Player.new
+        @isSplit = false
+        @currentBet = 0
+        @splitBet = 0
     end
 
     def Start()
         Update()
     end
 
-    def Update()
-        puts "------New Shuffle------"
-        if (@player.GetMoney == 0)
-            puts "You lose all money!"
-            abort "End game"
-        end
+    def Setup()
         @player.SetScore(0)
         @player.SetCardsNumber(0)
-        @dealer .SetScore(0)
-        @dealer .SetCardsNumber(0)
-        puts "You have : #{@player.GetMoney()}"
-        puts "What is your bid?"
-        @currentBid = gets.to_i
+        @dealer.SetScore(0)
+        @dealer.SetCardsNumber(0)
+        @isSplit = false
+    end
 
-        puts "Your bid is #{@currentBid}"
-        if ((@currentBid == 0) || (@currentBid > @player.GetMoney))
-            puts "Make correct bid"
-            Update()
-        end
-
-        @player.SetMoney(@player.GetMoney - @currentBid)
-        card = @cardsDeck.GetCard
-        puts "Dealer gets first card #{card}"
-        @dealer.SetNewCard(card)
-
-        puts "Now your move"
+    def PlayWithDeck()
+        puts "Now your move."
         choise = 'Y'
         while (choise != 'N')
             puts "Get card? (Y / N)"
@@ -49,58 +36,251 @@ class Game
                     break
                 end
             end
+
             card = @cardsDeck.GetCard
-            puts "You get the card: #{card}"
+            puts "You get the card: #{card}."
             if (card == 11)
                 if (@player.GetScore > 11)
-                    puts "11 turns into 1"
+                    puts "11 turns into 1."
                     card = 1
                 end
             end
+
             @player.SetNewCard(card)
-            puts "Your score is: #{@player.GetScore}"
+            puts "Your score is: #{@player.GetScore}."
             if (@player.GetScore > 21)
-                puts "Defeat, you have more than 21. You lose #{@currentBid}"
-                Update()
-            end
-            if (@player.GetScore == 21)
-                puts "You have 21. You are winner"
-                if (@player.GetCardsNumber == 2)
-                    @currentBid *= 1.5
+                puts "Defeat, you have more than 21. You lose #{@currentBet}."
+                if (!@isSplit)
+                    Update()
                 else
-                    @currentBid *= 2
+                    break
                 end
-                puts "You win #{@currentBid}"
-                @player.SetMoney(@player.GetMoney + @currentBid)
-                Update
+            end
+
+            if (@player.GetScore == 21)
+                puts "You have 21!"
+                if (@player.GetCardsNumber == 2) &&
+                    ((@dealer.GetScore != 10) || (@dealer.GetScore != 11))
+                    puts "You have BlackJack, and Dealer don't have BlackJack. You win 3 / 2 at your bet."
+                    @currentBet *= 1.5
+                    puts "You win #{@currentBet}."
+                    @player.SetMoney(@player.GetMoney + @currentBet)
+                    if (!isSplit)
+                        Update()
+                    else
+                        break
+                    end
+                end
+                break
+            end
+
+        end
+    end
+
+    #TODO: Make one method with passing value by reference
+    def PlayWithSplitDeck()
+        puts "Now your move with second Deck."
+        puts "Your score is: #{@split.GetScore}."
+        choise = 'Y'
+        while (choise != 'N')
+            puts "Get card? (Y / N)"
+            choise = gets.chop
+            if (choise != 'Y')
+                if (choise != 'N')
+                    next
+                else
+                    break
+                end
+            end
+
+            card = @cardsDeck.GetCard
+            puts "You get the card: #{card}."
+            if (card == 11)
+                if (@split.GetScore > 11)
+                    puts "11 turns into 1."
+                    card = 1
+                end
+            end
+
+            @split.SetNewCard(card)
+            puts "Your score is: #{@split.GetScore}."
+            if (@split.GetScore > 21)
+                puts "Defeat, you have more than 21. You lose #{@splitBet}."
+                break
+            end
+
+            if (@split.GetScore == 21)
+                puts "You have 21!"
+                if (@split.GetCardsNumber == 2) &&
+                    ((@dealer.GetScore != 10) || (@dealer.GetScore != 11))
+                    puts "You have BlackJack, and Dealer don't have BlackJack. You win 3 / 2 at your bet."
+                    @splitBet *= 1.5
+                    puts "You win #{@splitBet}."
+                    @player.SetMoney(@player.GetMoney + @splitBet)
+                    break
+                end
+                break
+            end
+
+        end
+    end
+
+    def PlayerMove()
+        @firstCard = @cardsDeck.GetCard
+        puts "You get first card: #{@firstCard}."
+        @player.SetNewCard(@firstCard)
+        puts "Your score is: #{@player.GetScore}."
+        @secondCard = @cardsDeck.GetCard
+        puts "You get second card: #{@secondCard}."
+        if (@firstCard == @secondCard)
+            choise = 'Y'
+            while (choise != 'N')
+                puts "First two cards are equals. Do you want split deck (Y / N)?"
+                choise = gets.chop
+                if (choise == 'Y')
+                    if (@currentBet <= (@player.GetMoney - @currentBet))
+                        @isSplit = true
+                        @splitBet = @currentBet
+                        puts "You make new bet #{@splitBet}."
+                        puts "Play with first deck."
+                        @player.SetMoney(@player.GetMoney - @splitBet)
+                        @split.SetNewCard(@secondCard)
+                    else
+                        puts "You dont have enouth money for new bet."
+                    end
+                    break
+                end
             end
         end
+        if (!@isSplit)
+            if (@secondCard == 11)
+                if (@player.GetScore > 11)
+                    puts "11 turns into 1."
+                    @secondCard = 1
+                end
+            end
+            @player.SetNewCard(@secondCard)
+        end
+        puts "Your score is: #{@player.GetScore}."
+        PlayWithDeck()
 
+        if (@isSplit)
+            puts "Play with second deck."
+            PlayWithSplitDeck()
+        end
+        puts 
+    end
+
+    def DealerMove()
         while (@dealer.GetScore < 17)
             card = @cardsDeck.GetCard
-            puts "Dealer gets card #{card}"
+            puts "Dealer gets card #{card}."
+            if (card == 11)
+                if (@dealer.GetScore > 11)
+                    puts "11 turns into 1."
+                    card = 1
+                end
+            end
             @dealer.SetNewCard(card)
-            puts "Dealer score is: #{@dealer.GetScore}"
+            puts "Dealer score is: #{@dealer.GetScore}."
             if (@dealer.GetScore > 21)
-                @currentBid *= 2
-                puts "Dealer have more than 21. You win #{@currentBid}"
-                @player.SetMoney(@player.GetMoney + @currentBid)
+                @currentBet *= 2
+                @splitBet *= 2
+                puts "Dealer has more than 21."
+                if (@player.GetScore <= 21)
+                    puts "You win #{@currentBet}."
+                    @player.SetMoney(@player.GetMoney + @currentBet)
+                end
+                if (@isSplit)
+                    if (@split.GetScore <= 21)
+                        puts "You win with second deck: #{@splitBet}"
+                        @player.SetMoney(@player.GetMoney + @splitBet)
+                    end
+                end
                 Update()
             end
         end
+    end
 
-        if (@player.GetScore > @dealer.GetScore)
-            @currentBid *= 2
-            puts "You have more thaт dealer. You win #{@currentBid}"
-            @player.SetMoney(@player.GetMoney + @currentBid)
-        else
-            if (@player.GetScore < @dealer.GetScore)
-                puts "Defeat, you less than dealer. You lose #{@currentBid}"
-            else
-                puts "Draw"
-                @player.SetMoney(@player.GetMoney + @currentBid)
+    def Recap()
+        if (@player.GetScore <= 21)
+            if (@dealer.GetScore <= 21)
+                if (@player.GetScore > @dealer.GetScore)
+                    @currentBet *= 2
+                    puts "You have more than dealer. You win #{@currentBet}."
+                    @player.SetMoney(@player.GetMoney + @currentBet)
+                else
+                    if (@player.GetScore < @dealer.GetScore)
+                        puts "Defeat, your score less than dealer. You lose #{@currentBet}"
+                    else
+                        if ((@player.GetScore == 21) && (@player.GetCardsNumber == 2) && (@dealer.GetCardsNumber != 2))
+                            @currentBet *= 1.5
+                            puts "Dealer has 21 but does not have BlackJack. You win #{@currentBet}."
+                        else
+                            puts "Draw"
+                        end
+                        @player.SetMoney(@player.GetMoney + @currentBet)
+                    end
+                end
             end
         end
+
+        if (@isSplit)
+            puts "Recap for split deck "
+            if (@split.GetScore <= 21)
+                if (@dealer.GetScore <= 21)
+                    if (@split.GetScore > @dealer.GetScore)
+                        @splitBet *= 2
+                        puts "You have more thaт dealer. You win #{@splitBet}."
+                        @player.SetMoney(@player.GetMoney + @splitBet)
+                    else
+                        if (@split.GetScore < @dealer.GetScore)
+                            puts "Defeat, your score less than dealer. You lose #{@splitBet}"
+                        else
+                            if ((@split.GetScore == 21) && (@split.GetCardsNumber == 2) && (@dealer.GetCardsNumber != 2))
+                                @splitBet *= 1.5
+                                puts "Dealer has 21 but does not have BlackJack. You win #{@splitBet}."
+                            else
+                                puts "Draw"
+                            end
+                            @player.SetMoney(@player.GetMoney + @splitBet)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    def Update()
+        Setup()
+        puts "------New Shuffle------"
+        if (@player.GetMoney == 0)
+            puts "You lose all money!"
+            abort "End game."
+        end
+        puts "You have : #{@player.GetMoney()}."
+
+        puts "What is your bid?"
+        @currentBet = 0
+        while ((@currentBet == 0) || (@currentBet > @player.GetMoney))
+            @currentBet = gets.to_i
+            if ((@currentBet == 0) || (@currentBet > @player.GetMoney))
+                puts "Make correct bid."
+            end
+        end
+        puts "Your bet is #{@currentBet}."
+
+        @player.SetMoney(@player.GetMoney - @currentBet)
+        card = @cardsDeck.GetCard
+        puts "Dealer gets first card #{card}."
+        @dealer.SetNewCard(card)
+
+        PlayerMove()
+
+        DealerMove()
+
+        Recap()
+
         Update()
     end
 end
@@ -151,6 +331,10 @@ class Player
         @money = value
     end
 end
+
+BEGIN {
+    puts "BlackJack game was running"
+}
 
 game = Game.new
 game.Start
