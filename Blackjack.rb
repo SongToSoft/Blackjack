@@ -22,6 +22,8 @@ class Game
         @dealer.SetScore(0)
         @dealer.SetCardsNumber(0)
         @isSplit = false
+        splitBet = 0
+        currentBet = 0
     end
 
     def PlayWithDeck(deck, bet, description)
