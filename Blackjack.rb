@@ -21,9 +21,11 @@ class Game
         @player.SetCardsNumber(0)
         @dealer.SetScore(0)
         @dealer.SetCardsNumber(0)
+        @split.SetScore(0)
+        @split.SetCardsNumber(0)
         @isSplit = false
-        splitBet = 0
-        currentBet = 0
+        @splitBet = 0
+        @currentBet = 0
     end
 
     def PlayWithDeck(deck, bet, description)
@@ -199,12 +201,11 @@ class Game
         end
         puts "You have : #{@player.GetMoney()}."
 
-        puts "What is your bid?"
-        @currentBet = 0
+        puts "What is your bet?"
         while ((@currentBet == 0) || (@currentBet > @player.GetMoney) || (@currentBet < 0))
             @currentBet = gets.to_i
             if ((@currentBet == 0) || (@currentBet > @player.GetMoney) || (@currentBet < 0))
-                puts "Make correct bid."
+                puts "Make correct bet."
             end
         end
         puts "Your bet is #{@currentBet}."
