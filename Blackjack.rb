@@ -1,6 +1,26 @@
 #!/usr/bin/ruby
 
-class Game
+def colorize(text, color_code)
+  "\e[#{color_code}m#{text}\e[0m"
+end
+
+def red(text)
+    colorize(text, 31)
+end
+def green(text)
+    colorize(text, 32)
+end
+
+def yellow(text)
+    colorize(text, 33)
+end
+
+def magenta(text)
+    colorize(text, 35)
+end
+
+
+class Blackjack
     def initialize()
         @cardsDeck = CardsDeck.new
         @player = Player.new
@@ -29,7 +49,7 @@ class Game
     end
 
     def PlayWithDeck(deck, bet, description)
-        puts "Now play: #{description}"
+        puts "Now play: #{description}."
         @currentDeck = deck
         puts "Your score is: #{@currentDeck.GetScore}."
         puts "Now your move."
@@ -57,7 +77,7 @@ class Game
             @currentDeck.SetNewCard(card)
             puts "Your score is: #{@currentDeck.GetScore}."
             if (@currentDeck.GetScore > 21)
-                puts "Defeat, you have more than 21. You lose #{bet}."
+                puts red("Defeat, you have more than 21. You lose #{bet}.")
                 if (!@isSplit)
                     Update()
                 else
@@ -68,9 +88,9 @@ class Game
             if (@currentDeck.GetScore == 21)
                 puts "You have 21!"
                 if (@currentDeck.GetCardsNumber == 2) && ((@dealer.GetScore != 10) || (@dealer.GetScore != 11))
-                    puts "You have BlackJack, and Dealer don't have BlackJack. You win 3 / 2 at your bet."
+                    puts "You have Blackjack, and Dealer don't have Blackjack. You win 3 / 2 at your bet."
                     bet *= 1.5
-                    puts "You win #{bet}."
+                    puts green("You win #{bet}.")
                     @player.SetMoney(@currentDeck.GetMoney + bet)
                     if (!@isSplit)
                         Update()
@@ -105,7 +125,7 @@ class Game
                         @player.SetMoney(@player.GetMoney - @splitBet)
                         @split.SetNewCard(@secondCard)
                     else
-                        puts "You dont have enough money for new bet."
+                        puts red("You dont have enough money for new bet.")
                     end
                     break
                 end
@@ -145,12 +165,12 @@ class Game
                 @splitBet *= 2
                 puts "Dealer has more than 21."
                 if (@player.GetScore <= 21)
-                    puts "You win #{@currentBet}."
+                    puts green("You win #{@currentBet}.")
                     @player.SetMoney(@player.GetMoney + @currentBet)
                 end
                 if (@isSplit)
                     if (@split.GetScore <= 21)
-                        puts "You win with second deck: #{@splitBet}"
+                        puts green("You win with second deck: #{@splitBet}")
                         @player.SetMoney(@player.GetMoney + @splitBet)
                     end
                 end
@@ -173,17 +193,17 @@ class Game
             if (@dealer.GetScore <= 21)
                 if (deck.GetScore > @dealer.GetScore)
                     bet *= 2
-                    puts "You have more than dealer. You win #{bet}."
+                    puts green("You have more than dealer. You win #{bet}.")
                     @player.SetMoney(@player.GetMoney + bet)
                 else
                     if (deck.GetScore < @dealer.GetScore)
-                        puts "Defeat, your score less than dealer. You lose #{bet}."
+                        puts red("Defeat, your score less than dealer. You lose #{bet}.")
                     else
                         if ((deck.GetScore == 21) && (deck.GetCardsNumber == 2) && (@dealer.GetCardsNumber != 2))
                             @bet *= 1.5
-                            puts "Dealer has 21 but does not have BlackJack. You win #{bet}."
+                            puts green("Dealer has 21 but does not have Blackjack. You win #{bet}.")
                         else
-                            puts "Draw."
+                            puts yellow("Draw.")
                         end
                         @player.SetMoney(@player.GetMoney + bet)
                     end
@@ -194,10 +214,10 @@ class Game
 
     def Update()
         Setup()
-        puts "------New Shuffle------"
+        puts magenta("------New Shuffle------")
         if (@player.GetMoney == 0)
-            puts "You lose all money!"
-            abort "End game."
+            puts red("You lose all money!")
+            abort red("End game.")
         end
         puts "You have : #{@player.GetMoney()}."
 
@@ -205,7 +225,7 @@ class Game
         while ((@currentBet == 0) || (@currentBet > @player.GetMoney) || (@currentBet < 0))
             @currentBet = gets.to_i
             if ((@currentBet == 0) || (@currentBet > @player.GetMoney) || (@currentBet < 0))
-                puts "Make correct bet."
+                puts red("Make correct bet.")
             end
         end
         puts "Your bet is #{@currentBet}."
@@ -272,8 +292,8 @@ class Player
 end
 
 BEGIN {
-    puts "BlackJack game was running"
+    puts "Blackjack game was running"
 }
 
-game = Game.new
-game.Start
+blackjack = Blackjack.new
+blackjack.Start
